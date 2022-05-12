@@ -1,0 +1,32 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Add TIC reader",
+                "description": "Set the serial configuration",
+                "data": {
+                    "serial": "Serial port",
+                    "name": "Name"
+                }
+            }
+        },
+        "error": {
+            "invalid_serial": "The serial port does not exists"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Add TIC reader",
+                "description": "Set the serial configuration",
+                "data": {
+                    "serial": "Serial port",
+                    "name": "Name"
+                }
+            }
+        },
+        "error": {
+            "invalid_serial": "The serial port does not exists"
+        }
+    }
+}

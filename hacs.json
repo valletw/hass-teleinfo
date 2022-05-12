@@ -1,0 +1,6 @@
+{
+    "name": "Tele Information",
+    "country": ["FR"],
+    "domains": ["sensor"],
+    "render_readme": true
+}

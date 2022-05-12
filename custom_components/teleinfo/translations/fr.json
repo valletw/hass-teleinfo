@@ -1,0 +1,32 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Ajout d'un lecteur de TIC",
+                "description": "Configuration du port série",
+                "data": {
+                    "serial": "Port série",
+                    "name": "Nom"
+                }
+            }
+        },
+        "error": {
+            "invalid_serial": "Le port série n'existe pas"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Ajout d'un lecteur de TIC",
+                "description": "Configuration du port série",
+                "data": {
+                    "serial": "Port série",
+                    "name": "Nom"
+                }
+            }
+        },
+        "error": {
+            "invalid_serial": "Le port série n'existe pas"
+        }
+    }
+}
