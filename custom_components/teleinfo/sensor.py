@@ -125,7 +125,8 @@ class TeleinfoCoordinator(DataUpdateCoordinator):
                     self.async_set_updated_data(data)
                     # Trigger sensors state update.
                     for sensor in self.sensors:
-                        sensor.async_schedule_update_ha_state()
+                        if sensor.enabled:
+                            sensor.async_write_ha_state()
                 # Decode value.
                 else:
                     name, value = line.split()[0:2]
