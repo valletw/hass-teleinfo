@@ -1,7 +1,7 @@
 """ Teleinfo sensors. """
 import asyncio
 import logging
-from typing import TypedDict
+from typing import List
 from serial import SerialException
 import serial_asyncio
 from homeassistant.core import HomeAssistant
@@ -13,6 +13,7 @@ from .const import (
     DOMAIN, NAME, CONF_NAME, CONF_DEVICE
 )
 from .entities import (
+    TeleinfoEntity,
     TeleinfoSensorInfo,
     TeleinfoSensorIndex,
     TeleinfoSensorCurrent,
@@ -29,24 +30,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_d
     port = entry.data.get(CONF_DEVICE)
     coordinator = TeleinfoCoordinator(hass, name, port, entry.entry_id)
     hass.data[DOMAIN][entry.entry_id] = coordinator
-    async_add_devices(coordinator.sensors.values())
+    async_add_devices(coordinator.sensors)
     await coordinator.async_added_to_hass()
-
-
-class TeleinfoSensors(TypedDict):
-    """ Teleinfo sensors. """
-    adco: TeleinfoSensorInfo
-    optarif: TeleinfoSensorInfo
-    ptec: TeleinfoSensorInfo
-    hhphc: TeleinfoSensorInfo
-    base: TeleinfoSensorIndex
-    hchc: TeleinfoSensorIndex
-    hchp: TeleinfoSensorIndex
-    isousc: TeleinfoSensorCurrent
-    iinst: TeleinfoSensorCurrent
-    imax: TeleinfoSensorCurrent
-    adps: TeleinfoSensorCurrent
-    papp: TeleinfoSensorPower
 
 
 class TeleinfoCoordinator(DataUpdateCoordinator):
@@ -68,20 +53,20 @@ class TeleinfoCoordinator(DataUpdateCoordinator):
         )
         self.port = port
         self.data = {}
-        self.sensors: TeleinfoSensors = {
-            "adco": TeleinfoSensorInfo(self, uid, name, "ADCO", "Adresse d'itentification"),
-            "optarif": TeleinfoSensorInfo(self, uid, name, "OPTARIF", "Option tarifaire"),
-            "ptec": TeleinfoSensorInfo(self, uid, name, "PTEC", "Période tarifaire en cours"),
-            "hhphc": TeleinfoSensorInfo(self, uid, name, "HHPHC", "Horaire HP/HC"),
-            "base": TeleinfoSensorIndex(self, uid, name, "BASE", "Index option Base"),
-            "hchc": TeleinfoSensorIndex(self, uid, name, "HCHC", "Index option Heure Creuse"),
-            "hchp": TeleinfoSensorIndex(self, uid, name, "HCHP", "Index option Heure Pleine"),
-            "isousc": TeleinfoSensorCurrent(self, uid, name, "ISOUSC", "Intensité souscrite"),
-            "iinst": TeleinfoSensorCurrent(self, uid, name, "IINST", "Intensité instantanée"),
-            "imax": TeleinfoSensorCurrent(self, uid, name, "IMAX", "Intensité maximale"),
-            "adps": TeleinfoSensorCurrent(self, uid, name, "ADPS", "Avertissement de dépassement"),
-            "papp": TeleinfoSensorPower(self, uid, name, "PAPP", "Puissance apparente")
-        }
+        self.sensors: List[TeleinfoEntity] = [
+            TeleinfoSensorADCO(self, uid, name),
+            TeleinfoSensorOPTARIF(self, uid, name),
+            TeleinfoSensorPTEC(self, uid, name),
+            TeleinfoSensorHHPHC(self, uid, name),
+            TeleinfoSensorBASE(self, uid, name),
+            TeleinfoSensorHCHC(self, uid, name),
+            TeleinfoSensorHCHP(self, uid, name),
+            TeleinfoSensorISOUSC(self, uid, name),
+            TeleinfoSensorIINST(self, uid, name),
+            TeleinfoSensorIMAX(self, uid, name),
+            TeleinfoSensorADPS(self, uid, name),
+            TeleinfoSensorPAPP(self, uid, name)
+        ]
         self.serial_task = None
         self.hass.bus.async_listen_once(
             EVENT_HOMEASSISTANT_STOP, self.serial_stop())
@@ -114,6 +99,7 @@ class TeleinfoCoordinator(DataUpdateCoordinator):
         await serial.readline()
         _LOGGER.debug("Serial processing")
         frame_processing = False
+        data = {}
         while True:
             # Read data, and remove trailing characters.
             try:
@@ -126,6 +112,7 @@ class TeleinfoCoordinator(DataUpdateCoordinator):
             # Look for start frame.
             if not frame_processing and self.FRAME_START in line:
                 frame_processing = True
+                data.clear()
                 _LOGGER.debug("Start frame")
                 continue
             # Parse frame content.
@@ -134,15 +121,86 @@ class TeleinfoCoordinator(DataUpdateCoordinator):
                 if self.FRAME_END in line:
                     frame_processing = False
                     _LOGGER.debug("End frame")
+                    # Update coordinator data.
+                    self.async_set_updated_data(data)
+                    # Trigger sensors state update.
+                    for sensor in self.sensors:
+                        sensor.async_schedule_update_ha_state()
                 # Decode value.
                 else:
                     name, value = line.split()[0:2]
                     _LOGGER.debug("Read '%s' = '%s'", name, value)
-                    # Update sensor value.
-                    self.data[name] = value
-                    name = name.lower()
-                    if name in self.sensors.keys():
-                        self.sensors[name].set_data(value)
-                        self.sensors[name].async_schedule_update_ha_state()
-                    else:
-                        _LOGGER.debug("Data not managed")
+                    # Store value.
+                    data[name] = value
+
+
+class TeleinfoSensorADCO(TeleinfoSensorInfo):
+    """ Teleinfo sensor ADCO. """
+    _FIELD = "ADCO"
+    _DESC = "Adresse d'itentification"
+
+
+class TeleinfoSensorOPTARIF(TeleinfoSensorInfo):
+    """ Teleinfo sensor OPTARIF. """
+    _FIELD = "OPTARIF"
+    _DESC = "Option tarifaire"
+
+
+class TeleinfoSensorPTEC(TeleinfoSensorInfo):
+    """ Teleinfo sensor PTEC. """
+    _FIELD = "PTEC"
+    _DESC = "Période tarifaire en cours"
+
+
+class TeleinfoSensorHHPHC(TeleinfoSensorInfo):
+    """ Teleinfo sensor HHPHC. """
+    _FIELD = "HHPHC"
+    _DESC = "Horaire HP/HC"
+
+
+class TeleinfoSensorBASE(TeleinfoSensorIndex):
+    """ Teleinfo sensor BASE. """
+    _FIELD = "BASE"
+    _DESC = "Index option Base"
+
+
+class TeleinfoSensorHCHC(TeleinfoSensorIndex):
+    """ Teleinfo sensor HCHC. """
+    _FIELD = "HCHC"
+    _DESC = "Index option Heure Creuse"
+
+
+class TeleinfoSensorHCHP(TeleinfoSensorIndex):
+    """ Teleinfo sensor HCHP. """
+    _FIELD = "HCHP"
+    _DESC = "Index option Heure Pleine"
+
+
+class TeleinfoSensorISOUSC(TeleinfoSensorCurrent):
+    """ Teleinfo sensor ISOUSC. """
+    _FIELD = "ISOUSC"
+    _DESC = "Intensité souscrite"
+
+
+class TeleinfoSensorIINST(TeleinfoSensorCurrent):
+    """ Teleinfo sensor IINST. """
+    _FIELD = "IINST"
+    _DESC = "Intensité instantanée"
+
+
+class TeleinfoSensorIMAX(TeleinfoSensorCurrent):
+    """ Teleinfo sensor IMAX. """
+    _FIELD = "IMAX"
+    _DESC = "Intensité maximale"
+
+
+class TeleinfoSensorADPS(TeleinfoSensorCurrent):
+    """ Teleinfo sensor ADPS. """
+    _FIELD = "ADPS"
+    _DESC = "Avertissement de dépassement"
+
+
+class TeleinfoSensorPAPP(TeleinfoSensorPower):
+    """ Teleinfo sensor PAPP. """
+    _FIELD = "PAPP"
+    _DESC = "Puissance apparente"

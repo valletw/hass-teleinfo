@@ -23,43 +23,59 @@ from .const import (
 class TeleinfoEntity(CoordinatorEntity, SensorEntity):
     """ Teleinfo entity. """
 
+    _FIELD = "unknown"
+    _DESC = "Unknown"
     _attr_should_poll = False
-    _attr_native_value = None
 
-    def __init__(self, coordinator, uid: str, device: str, name: str, desc: str):
+    def __init__(self, coordinator, uid: str, device: str):
         super().__init__(coordinator)
-        self.entity_id = f"{SENSOR}.{DOMAIN}_{device.lower()}_{name.lower()}"
-        self._attr_unique_id = f"{uid}-{name.lower()}"
-        self._attr_name = desc
+        self.entity_id = f"{SENSOR}.{DOMAIN}_{device.lower()}_{self._FIELD.lower()}"
+        self._attr_unique_id = f"{uid}-{self._FIELD.lower()}"
+        self._attr_name = self._DESC
         self._attr_device_info = {
             ATTR_IDENTIFIERS: {(DOMAIN, uid)},
             ATTR_NAME: device,
             ATTR_MANUFACTURER: "EDF",
         }
 
+    @staticmethod
+    def _convert_data(_):
+        """ Convert data to native value format. """
+        return None
+
+    @property
+    def native_value(self):
+        """ Get data from coordinator and convert it. """
+        if self._FIELD in self.coordinator.data:
+            return self._convert_data(self.coordinator.data[self._FIELD])
+        return None
+
 
 class TeleinfoSensorString(TeleinfoEntity):
     """ Teleinfo entity with string data. """
 
-    def set_data(self, value: str):
-        """ Update entity with new value. """
-        self._attr_native_value = value
+    @staticmethod
+    def _convert_data(value: str):
+        """ Convert data to native value format. """
+        return value
 
 
 class TeleinfoSensorInt(TeleinfoEntity):
     """ Teleinfo entity with integer data. """
 
-    def set_data(self, value: str):
-        """ Update entity with new value. """
-        self._attr_native_value = int(value)
+    @staticmethod
+    def _convert_data(value: str):
+        """ Convert data to native value format. """
+        return int(value)
 
 
 class TeleinfoSensorIntKilo(TeleinfoEntity):
     """ Teleinfo entity with integer data. """
 
-    def set_data(self, value: str):
-        """ Update entity with new value. """
-        self._attr_native_value = int(value) / 1000
+    @staticmethod
+    def _convert_data(value: str):
+        """ Convert data to native value format. """
+        return int(value) / 1000
 
 
 class TeleinfoSensorInfo(TeleinfoSensorString):
