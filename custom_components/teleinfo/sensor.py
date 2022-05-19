@@ -67,19 +67,20 @@ class TeleinfoCoordinator(DataUpdateCoordinator):
             hass, _LOGGER, name=NAME,
         )
         self.port = port
+        self.data = {}
         self.sensors: TeleinfoSensors = {
-            "adco": TeleinfoSensorInfo(uid, name, "ADCO", "Adresse d'itentification"),
-            "optarif": TeleinfoSensorInfo(uid, name, "OPTARIF", "Option tarifaire"),
-            "ptec": TeleinfoSensorInfo(uid, name, "PTEC", "Période tarifaire en cours"),
-            "hhphc": TeleinfoSensorInfo(uid, name, "HHPHC", "Horaire HP/HC"),
-            "base": TeleinfoSensorIndex(uid, name, "BASE", "Index option Base"),
-            "hchc": TeleinfoSensorIndex(uid, name, "HCHC", "Index option Heure Creuse"),
-            "hchp": TeleinfoSensorIndex(uid, name, "HCHP", "Index option Heure Pleine"),
-            "isousc": TeleinfoSensorCurrent(uid, name, "ISOUSC", "Intensité souscrite"),
-            "iinst": TeleinfoSensorCurrent(uid, name, "IINST", "Intensité instantanée"),
-            "imax": TeleinfoSensorCurrent(uid, name, "IMAX", "Intensité maximale"),
-            "adps": TeleinfoSensorCurrent(uid, name, "ADPS", "Avertissement de dépassement"),
-            "papp": TeleinfoSensorPower(uid, name, "PAPP", "Puissance apparente")
+            "adco": TeleinfoSensorInfo(self, uid, name, "ADCO", "Adresse d'itentification"),
+            "optarif": TeleinfoSensorInfo(self, uid, name, "OPTARIF", "Option tarifaire"),
+            "ptec": TeleinfoSensorInfo(self, uid, name, "PTEC", "Période tarifaire en cours"),
+            "hhphc": TeleinfoSensorInfo(self, uid, name, "HHPHC", "Horaire HP/HC"),
+            "base": TeleinfoSensorIndex(self, uid, name, "BASE", "Index option Base"),
+            "hchc": TeleinfoSensorIndex(self, uid, name, "HCHC", "Index option Heure Creuse"),
+            "hchp": TeleinfoSensorIndex(self, uid, name, "HCHP", "Index option Heure Pleine"),
+            "isousc": TeleinfoSensorCurrent(self, uid, name, "ISOUSC", "Intensité souscrite"),
+            "iinst": TeleinfoSensorCurrent(self, uid, name, "IINST", "Intensité instantanée"),
+            "imax": TeleinfoSensorCurrent(self, uid, name, "IMAX", "Intensité maximale"),
+            "adps": TeleinfoSensorCurrent(self, uid, name, "ADPS", "Avertissement de dépassement"),
+            "papp": TeleinfoSensorPower(self, uid, name, "PAPP", "Puissance apparente")
         }
         self.serial_task = None
         self.hass.bus.async_listen_once(
@@ -138,6 +139,7 @@ class TeleinfoCoordinator(DataUpdateCoordinator):
                     name, value = line.split()[0:2]
                     _LOGGER.debug("Read '%s' = '%s'", name, value)
                     # Update sensor value.
+                    self.data[name] = value
                     name = name.lower()
                     if name in self.sensors.keys():
                         self.sensors[name].set_data(value)

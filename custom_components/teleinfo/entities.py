@@ -12,6 +12,7 @@ from homeassistant.const import (
     ELECTRIC_CURRENT_AMPERE,
     POWER_VOLT_AMPERE
 )
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     DOMAIN,
@@ -19,13 +20,14 @@ from .const import (
 )
 
 
-class TeleinfoEntity(SensorEntity):
+class TeleinfoEntity(CoordinatorEntity, SensorEntity):
     """ Teleinfo entity. """
 
     _attr_should_poll = False
     _attr_native_value = None
 
-    def __init__(self, uid: str, device: str, name: str, desc: str):
+    def __init__(self, coordinator, uid: str, device: str, name: str, desc: str):
+        super().__init__(coordinator)
         self.entity_id = f"{SENSOR}.{DOMAIN}_{device.lower()}_{name.lower()}"
         self._attr_unique_id = f"{uid}-{name.lower()}"
         self._attr_name = desc
