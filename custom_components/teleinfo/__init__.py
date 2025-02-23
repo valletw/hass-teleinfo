@@ -1,5 +1,4 @@
 """ Tele Information integration. """
-import asyncio
 import logging
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
@@ -23,19 +22,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data.setdefault(DOMAIN, {})
         _LOGGER.debug("Create integration")
     # Forward the setup to the sensor platform.
-    hass.async_add_job(
-        hass.config_entries.async_forward_entry_setup(entry, SENSOR)
-    )
+    await hass.config_entries.async_forward_entry_setups(entry, [SENSOR])
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """ Unload a config entry. """
-    unload_ok = all(
-        await asyncio.gather(
-            *[hass.config_entries.async_forward_entry_unload(entry, SENSOR)]
-        )
-    )
+    unload_ok = await hass.config_entries.async_forward_entry_unload(entry, SENSOR)
     # Remove config entry from domain.
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
