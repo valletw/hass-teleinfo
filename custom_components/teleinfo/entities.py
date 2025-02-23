@@ -8,9 +8,9 @@ from homeassistant.const import (
     ATTR_IDENTIFIERS,
     ATTR_MANUFACTURER,
     ATTR_NAME,
-    ENERGY_KILO_WATT_HOUR,
-    ELECTRIC_CURRENT_AMPERE,
-    POWER_VOLT_AMPERE
+    UnitOfEnergy,
+    UnitOfElectricCurrent,
+    UnitOfApparentPower
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -86,18 +86,18 @@ class TeleinfoSensorIndex(TeleinfoSensorIntKilo):
     """ Teleinfo index sensor. """
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
-    _attr_native_unit_of_measurement = ENERGY_KILO_WATT_HOUR
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
 
 
 class TeleinfoSensorCurrent(TeleinfoSensorInt):
     """ Teleinfo current sensor. """
     _attr_device_class = SensorDeviceClass.CURRENT
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = ELECTRIC_CURRENT_AMPERE
+    _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
 
 
 class TeleinfoSensorPower(TeleinfoSensorInt):
     """ Teleinfo power sensor. """
     _attr_device_class = SensorDeviceClass.APPARENT_POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = POWER_VOLT_AMPERE
+    _attr_native_unit_of_measurement = UnitOfApparentPower.VOLT_AMPERE
